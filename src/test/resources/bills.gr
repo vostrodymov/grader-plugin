@@ -1,0 +1,29 @@
+
+config:
+  generator: kafka #kafka,rest
+
+processors: #Ключевое слово
+  bill-listener: #Имя обработчика
+    kafka: #Ключевое слово
+      listener: ru.vostrodymov.genapi.kafka.BillListener #Ключевое слово
+      service: ru.vostrodymov.genapi.service.BillKafkaService #Ключевое слово
+      key: String #Ключевое слово
+      value: $M{bill} #Ключевое слово
+
+models: #Ключевое слово
+  bill: #Имя модели
+    description: Модель счета
+    class: ru.vostrodymov.genapi.model.Bill
+    properties: #Ключевое слово
+      id: #Имя проперти
+        class: java.util.UUID #Ключевое слово
+        description: Идентификатор #Ключевое слово
+      name: #Имя проперти
+        class: String #Ключевое слово
+        description: Наименование #Ключевое слово
+      version: #Имя проперти
+        class: Integer #Ключевое слово
+        description: Версия #Ключевое слово
+      flag: #Имя проперти
+        class: boolean #Ключевое слово
+        description: Флаг #Ключевое слово
