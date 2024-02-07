@@ -1,12 +1,13 @@
 package ru.vostrodymov.grader.core.generator;
 
 import ru.vostrodymov.grader.core.datamodel.KafkaDM;
+import ru.vostrodymov.grader.core.props.GraderProperties;
 import ru.vostrodymov.grader.core.write.ClassWriter;
 
-
+@Deprecated
 public class KafkaListenerGenerator implements Generator<KafkaDM> {
     @Override
-    public String run(KafkaDM listener) {
+    public String run(KafkaDM listener, GraderProperties props) {
         var writer = new ClassWriter();
 
         writer.writePackage(listener.getListener().getPack());

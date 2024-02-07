@@ -1,16 +1,19 @@
-package ru.vostrodymov.grader.plugin.action;
+package ru.vostrodymov.grader.plugin.action.base;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import ru.vostrodymov.grader.plugin.command.EntityGenCommand;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-public class FilterGenAction extends BaseAction {
+/**
+ * Базовы класс акшина для выполнения действий над .java файлами
+ */
+public abstract class FromModelAction extends BaseAction {
     private static final String EXTENSION = "java";
 
     @Override
@@ -21,15 +24,15 @@ public class FilterGenAction extends BaseAction {
             final List<VirtualFile> filesList = Arrays.asList(files);
             var flag = filesList.stream().anyMatch(q -> EXTENSION.equals(q.getExtension()));
             e.getPresentation().setEnabled(flag);
+            e.getPresentation().setVisible(flag);
+        } else {
+            e.getPresentation().setVisible(false);
         }
     }
 
-
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-        var project = e.getProject();
         var dataContext = e.getDataContext();
-
         VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
         if (files != null) {
             final List<VirtualFile> filesList = Arrays.asList(files);
@@ -37,12 +40,9 @@ public class FilterGenAction extends BaseAction {
                     .filter(q -> EXTENSION.equals(q.getExtension()))
                     .collect(Collectors.toSet());
 
-
-            var command = new EntityGenCommand(project, takeRootDirectory(project, dataContext));
-            for (var el : items) {
-                command.run(el);
-            }
+            apply(e, items);
         }
     }
 
+    protected abstract void apply(AnActionEvent e, Set<VirtualFile> items);
 }

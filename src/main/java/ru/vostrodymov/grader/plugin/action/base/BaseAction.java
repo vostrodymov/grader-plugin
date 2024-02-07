@@ -1,4 +1,4 @@
-package ru.vostrodymov.grader.plugin.action;
+package ru.vostrodymov.grader.plugin.action.base;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.CommonDataKeys;

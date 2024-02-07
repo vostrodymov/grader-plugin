@@ -18,6 +18,11 @@ public class ClassWithGenericDM extends ClassDM {
         setGenericArgs(Arrays.asList(genericArgs));
     }
 
+    public ClassWithGenericDM(String fullName, ClassDM... genericArgs) {
+        super(fullName);
+        setGenericArgs(Arrays.asList(genericArgs));
+    }
+
     @Override
     public void pushImport(Consumer<String> add) {
         super.pushImport(add);

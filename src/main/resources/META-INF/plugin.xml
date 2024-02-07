@@ -23,12 +23,17 @@
     <!-- Extension points defined by the plugin.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
     <extensions defaultExtensionNs="com.intellij">
-
+<!--            <projectConfigurable-->
+<!--                    parentId="tools"-->
+<!--                    instance="ru.vostrodymov.grader.plugin.ProjectSettingsConfigurable"-->
+<!--                    id="com.example.ProjectSettingsConfigurable"-->
+<!--                    displayName="My Project Settings"-->
+<!--                    nonDefaultProject="true"/>-->
     </extensions>
 
     <actions>
         <group id="ru.vostrodymov.grader.plugin.action.CustomGroupAction"
-               class="ru.vostrodymov.grader.plugin.action.CustomGroupAction"
+               class="ru.vostrodymov.grader.plugin.action.base.DefaultGroupAction"
                text="Grader"
                popup="true"
                description="Grader generator actions"
@@ -37,10 +42,10 @@
             <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="AssociateWithFileType"/>
 
             <action id="grader.filterbuilder"
-                    class="ru.vostrodymov.grader.plugin.action.FilterGenAction" text="Filter Builder"/>
+                    class="ru.vostrodymov.grader.plugin.action.FilterBuilderAction" text="Filter Builder"/>
 
             <action id="grader.historymodel"
-                    class="ru.vostrodymov.grader.plugin.action.FilterGenAction" text="History model"/>
+                    class="ru.vostrodymov.grader.plugin.action.ServiceAction" text="Service"/>
 
 
         </group>

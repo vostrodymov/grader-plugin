@@ -2,12 +2,14 @@ package ru.vostrodymov.grader.core.generator;
 
 
 import ru.vostrodymov.grader.core.datamodel.ModelDM;
+import ru.vostrodymov.grader.core.props.GraderProperties;
 import ru.vostrodymov.grader.core.write.ClassWriter;
 
+@Deprecated
 public class ModelGenerator implements Generator<ModelDM> {
 
     @Override
-    public String run(ModelDM model) {
+    public String run(ModelDM model, GraderProperties props) {
         var writer = new ClassWriter();
 
         writer.writePackage(model.getClazz().getPack());

@@ -1,18 +1,15 @@
 package ru.vostrodymov.grader.core.generator;
 
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.Setter;
 import ru.vostrodymov.grader.core.datamodel.ModelDM;
 import ru.vostrodymov.grader.core.datamodel.PropertyDM;
 import ru.vostrodymov.grader.core.datamodel.types.ClassDM;
 import ru.vostrodymov.grader.core.datamodel.types.ClassWithGenericDM;
+import ru.vostrodymov.grader.core.generator.types.Breadcrumbs;
+import ru.vostrodymov.grader.core.props.GraderProperties;
 import ru.vostrodymov.grader.core.write.ClassWriter;
 
 import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
-import java.util.ResourceBundle;
 
 public class ModelFilterBuilderGenerator implements Generator<ModelDM> {
     private static final String FB_KEY = "namespace.filter-builder.filter-builder";
@@ -27,17 +24,16 @@ public class ModelFilterBuilderGenerator implements Generator<ModelDM> {
     }
 
     @Override
-    public String run(ModelDM model) {
-        var rb = ResourceBundle.getBundle("grader");
+    public String run(ModelDM model, GraderProperties props) {
         var writer = new ClassWriter();
 
         var fClass = getClassDm(model);
         var qClazz = new ClassDM(model.getClazz().getPack(), "Q" + model.getClazz().getName());
-        var bClass = new ClassWithGenericDM(rb.getString(FB_KEY), "FilterBuilder", model.getClazz());
-        var tcClass = new ClassDM(rb.getString(TC_KEY), "TypeConverter");
-        var wdClass = new ClassDM(rb.getString(WD_KEY), "WhereDefinition");
-        var ctClass = new ClassDM(rb.getString(CT_KEY), "CompareType");
-        var csClass = new ClassDM(rb.getString(CS_KEY), "ConverterStore");
+        var bClass = new ClassWithGenericDM(props.get(FB_KEY), model.getClazz());
+        var tcClass = new ClassDM(props.get(TC_KEY));
+        var wdClass = new ClassDM(props.get(WD_KEY));
+        var ctClass = new ClassDM(props.get(CT_KEY));
+        var csClass = new ClassDM(props.get(CS_KEY));
 
 
         writer.writePackage(fClass.getPack());
@@ -109,38 +105,6 @@ public class ModelFilterBuilderGenerator implements Generator<ModelDM> {
             } else {
                 writeFilterProperties(writer, qClazz, el.getValue().getProperties(), elBreadcrumbs);
             }
-        }
-    }
-
-
-    @Getter(AccessLevel.PRIVATE)
-    @Setter(AccessLevel.PRIVATE)
-    public static class Breadcrumbs {
-        private Breadcrumbs parent;
-        private String name;
-
-        public Breadcrumbs(String name) {
-            this(name, null);
-        }
-
-        public Breadcrumbs(String name, Breadcrumbs parent) {
-            setName(name);
-            setParent(parent);
-        }
-
-        public String getPath(String splitter) {
-            return Optional.ofNullable(parent)
-                    .map(q -> q.getPath(splitter))
-                    .map(q -> q + splitter)
-                    .orElse("") + name;
-        }
-
-        public String getWithoutRoot(String splitter) {
-            return Optional.ofNullable(parent)
-                    .filter(q -> q.getParent() != null)
-                    .map(q -> q.getWithoutRoot(splitter))
-                    .map(q -> q + splitter)
-                    .orElse("") + name;
         }
     }
 }
