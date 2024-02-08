@@ -3,7 +3,7 @@ package ru.vostrodymov.grader.parser;
 import org.junit.jupiter.api.Test;
 import ru.vostrodymov.grader.core.generator.types.Breadcrumbs;
 
-public class PsiClassExtractorTest {
+public class JpaModelExtractorTest {
 
     @Test
     public void testBreadcrumbs() {

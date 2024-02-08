@@ -23,7 +23,7 @@ public class ClassWriterTest {
         var writer = new ModelGenerator();
         var yamlExtractor = new YamlExtractor();
         var modelDM = yamlExtractor.take(this.getClass().getResource("/bills.gr").getFile());
-        System.out.println(writer.run(modelDM.getModels().get("bill")));
+        System.out.println(writer.run(modelDM.getModels().get("bill"), null));
     }
 
 }

@@ -24,6 +24,10 @@ public class PropertyDM {
      */
     @JsonAlias("description")
     private String description;
+    /**
+     * Признак что поле является идентификатором
+     */
+    private boolean identifier = false;
 
     private Map<String, PropertyDM> properties;
 

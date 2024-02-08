@@ -8,13 +8,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import ru.vostrodymov.grader.core.datamodel.ModelDM;
 import ru.vostrodymov.grader.core.datamodel.types.ClassDM;
-import ru.vostrodymov.grader.core.parser.PsiClassExtractor;
-
-import java.io.File;
-import java.util.ResourceBundle;
+import ru.vostrodymov.grader.core.parser.JpaModelExtractor;
 
 @Getter
 public abstract class BaseCommand {
@@ -37,7 +33,7 @@ public abstract class BaseCommand {
     public void run(VirtualFile vFile) {
 
 
-        final var classExtractor = new PsiClassExtractor();
+        final var classExtractor = new JpaModelExtractor();
         PsiFile file = psiMgr.findFile(vFile);
         if ((file instanceof PsiJavaFile)) {
             final var jel = (PsiJavaFile) file;

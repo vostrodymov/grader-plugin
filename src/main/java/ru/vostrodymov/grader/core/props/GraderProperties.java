@@ -37,4 +37,10 @@ public class GraderProperties {
                 .orElseGet(() -> defProps.getString(key));
     }
 
+    public Boolean getBool(String key) {
+        return Optional.of(get(key))
+                .map(Boolean::valueOf)
+                .orElse(true);
+    }
+
 }

@@ -6,14 +6,13 @@ import ru.vostrodymov.grader.core.datamodel.ModelDM;
 import ru.vostrodymov.grader.core.datamodel.PropertyDM;
 import ru.vostrodymov.grader.core.datamodel.types.ClassDM;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
-public class PsiClassExtractor {
-    private Set<String> navAnnotations = Set.of("javax.persistence.OneToMany", "javax.persistence.ManyToOne");
-    private Set<String> propAnnotations = Set.of("javax.persistence.Column", "javax.persistence.Id");
+public class JpaModelExtractor {
+    private static final String COLUMN_ID_ANN = "javax.persistence.Id";
+    private static final String COLUMN_PROP_ANN = "javax.persistence.Column";
+    private final Set<String> navAnnotations = Set.of("javax.persistence.OneToMany", "javax.persistence.ManyToOne");
+    private final Set<String> propAnnotations = Set.of(COLUMN_PROP_ANN, COLUMN_ID_ANN);
 
     public ModelDM take(String packageName, PsiClass clazz) {
         ModelDM model = new ModelDM();
@@ -27,6 +26,10 @@ public class PsiClassExtractor {
         var map = new HashMap<String, PropertyDM>();
         for (var fel : clazz.getAllFields()) {
             var prop = new PropertyDM(new ClassDM(fel.getType().getCanonicalText()), null);
+
+            Optional.of(fel.getAnnotations()).map(Arrays::stream)
+                    .filter(q -> q.anyMatch(r -> r.hasQualifiedName(COLUMN_ID_ANN)))
+                    .ifPresent(q -> prop.setIdentifier(true));
 
             if (Arrays.stream(fel.getAnnotations()).anyMatch(q -> navAnnotations.contains(q.getQualifiedName()))) {
                 var fieldClass = PsiTypesUtil.getPsiClass(fel.getType());
