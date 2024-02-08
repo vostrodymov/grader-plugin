@@ -12,11 +12,11 @@ import java.util.Locale;
 import java.util.Map;
 
 public class ModelFilterBuilderGenerator implements Generator<ModelDM> {
-    private static final String FB_KEY = "namespace.filter-builder.filter-builder";
-    private static final String TC_KEY = "namespace.filter-builder.type-converter";
-    private static final String WD_KEY = "namespace.filter-builder.where-definition";
-    private static final String CT_KEY = "namespace.filter-builder.compare-type";
-    private static final String CS_KEY = "namespace.filter-builder.converter-store";
+    private static final String FB_KEY = "filter-builder.filter-builder";
+    private static final String TC_KEY = "filter-builder.type-converter";
+    private static final String WD_KEY = "filter-builder.where-definition";
+    private static final String CT_KEY = "filter-builder.compare-type";
+    private static final String CS_KEY = "filter-builder.converter-store";
     private static final String SUFFIX = "FilterBuilder";
 
     public ClassDM getClassDm(ModelDM model) {

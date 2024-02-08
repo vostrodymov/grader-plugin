@@ -11,13 +11,13 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class ServiceGenerator implements Generator<ModelDM> {
-    private static final String BS_KEY = "namespace.service.base-service";
-    private static final String QD_KEY = "namespace.service.query-definition";
-    private static final String WD_KEY = "namespace.service.where-definition";
-    private static final String CT_KEY = "namespace.service.compare-type";
+    private static final String BS_KEY = "service.base-service";
+    private static final String QD_KEY = "service.query-definition";
+    private static final String WD_KEY = "service.where-definition";
+    private static final String CT_KEY = "service.compare-type";
 
-    private static final String OVERRIDE_FIND_KEY = "namespace.service.override.find";
-    private static final String OVERRIDE_FIND_BY_ID_KEY = "namespace.service.override.find-by-id";
+    private static final String OVERRIDE_FIND_KEY = "service.override.find";
+    private static final String OVERRIDE_FIND_BY_ID_KEY = "service.override.find-by-id";
     private static final String SUFFIX = "Service";
 
     @Override

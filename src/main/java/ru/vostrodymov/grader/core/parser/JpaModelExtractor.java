@@ -8,12 +8,13 @@ import ru.vostrodymov.grader.core.datamodel.types.ClassDM;
 
 import java.util.*;
 
-public class JpaModelExtractor {
+public class JpaModelExtractor implements Extractor<ModelDM> {
     private static final String COLUMN_ID_ANN = "javax.persistence.Id";
     private static final String COLUMN_PROP_ANN = "javax.persistence.Column";
     private final Set<String> navAnnotations = Set.of("javax.persistence.OneToMany", "javax.persistence.ManyToOne");
     private final Set<String> propAnnotations = Set.of(COLUMN_PROP_ANN, COLUMN_ID_ANN);
 
+    @Override
     public ModelDM take(String packageName, PsiClass clazz) {
         ModelDM model = new ModelDM();
         model.setClazz(new ClassDM(packageName, clazz.getName()));
@@ -22,7 +23,7 @@ public class JpaModelExtractor {
         return model;
     }
 
-    public Map<String, PropertyDM> takeProperties(PsiClass clazz) {
+    private Map<String, PropertyDM> takeProperties(PsiClass clazz) {
         var map = new HashMap<String, PropertyDM>();
         for (var fel : clazz.getAllFields()) {
             var prop = new PropertyDM(new ClassDM(fel.getType().getCanonicalText()), null);
