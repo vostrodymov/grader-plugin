@@ -3,13 +3,13 @@ package ru.vostrodymov.grader.plugin.command;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import ru.vostrodymov.grader.core.datamodel.ModelDM;
-import ru.vostrodymov.grader.core.generator.ModelFilterBuilderGenerator;
+import ru.vostrodymov.grader.core.generator.QueryGenerator;
 import ru.vostrodymov.grader.core.props.GraderProperties;
 
-public class FilterBuilderCommand extends BaseCommand {
-    private final ModelFilterBuilderGenerator filterBuilderGenerator = new ModelFilterBuilderGenerator();
+public class QueryCommand extends BaseCommand {
+    private final QueryGenerator filterBuilderGenerator = new QueryGenerator();
 
-    public FilterBuilderCommand(Project project, PsiDirectory rootDirectory) {
+    public QueryCommand(Project project, PsiDirectory rootDirectory) {
         super(project, rootDirectory);
     }
 

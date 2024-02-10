@@ -11,13 +11,13 @@ import ru.vostrodymov.grader.core.write.ClassWriter;
 import java.util.Locale;
 import java.util.Map;
 
-public class ModelFilterBuilderGenerator implements Generator<ModelDM> {
-    private static final String FB_KEY = "filter-builder.filter-builder";
-    private static final String TC_KEY = "filter-builder.type-converter";
-    private static final String WD_KEY = "filter-builder.where-definition";
-    private static final String CT_KEY = "filter-builder.compare-type";
-    private static final String CS_KEY = "filter-builder.converter-store";
-    private static final String SUFFIX = "FilterBuilder";
+public class QueryGenerator implements Generator<ModelDM> {
+    private static final String BQ_KEY = "query.base-query";
+    private static final String TC_KEY = "query.type-converter";
+    private static final String WD_KEY = "query.where-definition";
+    private static final String CT_KEY = "query.compare-type";
+    private static final String CS_KEY = "query.converter-store";
+    public static final String SUFFIX = "Query";
 
     public ClassDM getClassDm(ModelDM model) {
         return new ClassDM(model.getClazz().getPack(), model.getClazz().getName() + SUFFIX);
@@ -29,13 +29,14 @@ public class ModelFilterBuilderGenerator implements Generator<ModelDM> {
 
         var fClass = getClassDm(model);
         var qClazz = new ClassDM(model.getClazz().getPack(), "Q" + model.getClazz().getName());
-        var bClass = new ClassWithGenericDM(props.get(FB_KEY), model.getClazz());
+        var bqClass = new ClassWithGenericDM(props.get(BQ_KEY), model.getClazz());
         var tcClass = new ClassDM(props.get(TC_KEY));
         var wdClass = new ClassDM(props.get(WD_KEY));
         var ctClass = new ClassDM(props.get(CT_KEY));
         var csClass = new ClassDM(props.get(CS_KEY));
 
         var emClass = new ClassDM("javax.persistence", "EntityManager");
+        var bpClass = new ClassWithGenericDM("com.querydsl.core.types.dsl.EntityPathBase", model.getClazz());
 
         writer.writePackage(fClass.getPack());
 
@@ -47,8 +48,9 @@ public class ModelFilterBuilderGenerator implements Generator<ModelDM> {
         writer.writeImport(emClass);
         writer.writeImport("lombok.Getter");
         writer.writeImport("lombok.Setter");
+        writer.writeImport(bpClass);
 
-        writer.writeImport(bClass)
+        writer.writeImport(bqClass)
                 .writeImport(tcClass)
                 .writeImport(csClass)
                 .writeImport(ctClass)
@@ -57,7 +59,7 @@ public class ModelFilterBuilderGenerator implements Generator<ModelDM> {
         writer.writeImport("java.util.Locale");
 
         writer.append("@Component").newLine();
-        writer.writeClassName(fClass.getName(), bClass);
+        writer.writeClassName(fClass.getName(), bqClass);
         writer.begin();//classBegin
         //Props
         writer.tab().append("@Getter").newLine()
@@ -81,17 +83,20 @@ public class ModelFilterBuilderGenerator implements Generator<ModelDM> {
                 .begin()
                 .tab().append("return switch (where.getField().toLowerCase(Locale.ROOT)) ")
                 .begin();// beginReturn
-        writeFilterProperties(writer, qClazz, model.getProperties(), new Breadcrumbs(qClazz.getPropertyName()));
+        writeFilterProperties(writer, model.getProperties(), new Breadcrumbs(qClazz.getPropertyName()));
 
         writer.append("default -> Expressions.ONE.eq(Expressions.TWO);").newLine()
                 .endAndSymbol(";") // endReturn
                 .end();
 
+        writer.newLine();
+        writeBasePath(writer, bpClass, qClazz);
+
         writer.end(); // classEnd
         return writer.toString();
     }
 
-    private void writeFilterProperties(ClassWriter writer, ClassDM qClazz, Map<String, PropertyDM> properties, Breadcrumbs breadcrumbs) {
+    private void writeFilterProperties(ClassWriter writer, Map<String, PropertyDM> properties, Breadcrumbs breadcrumbs) {
         for (var el : properties.entrySet()) {
             var elBreadcrumbs = new Breadcrumbs(el.getKey(), breadcrumbs);
             if (!el.getValue().isObject()) {
@@ -107,8 +112,17 @@ public class ModelFilterBuilderGenerator implements Generator<ModelDM> {
                         .append(elBreadcrumbs.getPath(".")).append(", ")
                         .append("where.getValue(), ").append(el.getValue().getClazz().getName()).append(".class);").newLine();
             } else {
-                writeFilterProperties(writer, qClazz, el.getValue().getProperties(), elBreadcrumbs);
+                writeFilterProperties(writer, el.getValue().getProperties(), elBreadcrumbs);
             }
         }
+    }
+
+    private void writeBasePath(ClassWriter writer, ClassDM bpClass, ClassDM qClass) {
+        writer.tab().append("@Override").newLine();
+        writer.tab().append("protected ").append(bpClass.getName()).append(" getEntityPath()")
+                .begin()
+                .tab().append("return this.").append(qClass.getPropertyName()).append(";").newLine()
+                .end();
+
     }
 }

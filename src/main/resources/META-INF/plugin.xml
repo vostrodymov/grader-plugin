@@ -16,7 +16,7 @@
     <description><![CDATA[
 Plugin for generating standardized classes, allows you to generate template classes for building APIs.
 You can create a service template that is suitable for retrieving data from a database.
-You can create a query builder template for translation into a database.
+You can create a query template for translation into a database.
 These classes use QueryDLS as a translator to the database language.
 ]]></description>
 
@@ -46,8 +46,8 @@ These classes use QueryDLS as a translator to the database language.
 
             <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="AssociateWithFileType"/>
 
-            <action id="grader.filterbuilder"
-                    class="ru.vostrodymov.grader.plugin.action.FilterBuilderAction" text="Filter Builder"/>
+            <action id="grader.query"
+                    class="ru.vostrodymov.grader.plugin.action.QueryAction" text="Query"/>
 
             <action id="grader.historymodel"
                     class="ru.vostrodymov.grader.plugin.action.ServiceAction" text="Service"/>

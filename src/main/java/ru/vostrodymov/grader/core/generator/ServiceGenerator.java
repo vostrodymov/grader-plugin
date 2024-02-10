@@ -15,7 +15,6 @@ public class ServiceGenerator implements Generator<ModelDM> {
     private static final String QD_KEY = "service.query-definition";
     private static final String WD_KEY = "service.where-definition";
     private static final String CT_KEY = "service.compare-type";
-    private static final String FB_KEY = "service.filter-builder";
 
     private static final String OVERRIDE_FIND_KEY = "service.override.find";
     private static final String OVERRIDE_FIND_BY_ID_KEY = "service.override.find-by-id";
@@ -29,7 +28,7 @@ public class ServiceGenerator implements Generator<ModelDM> {
         var qdClass = new ClassDM(props.get(QD_KEY));
         var wdClass = new ClassDM(props.get(WD_KEY));
         var ctClass = new ClassDM(props.get(CT_KEY));
-        var fbClass = new ClassWithGenericDM(props.get(FB_KEY), model.getClazz());
+        var qbClass = new ClassDM(model.getClazz() + QueryGenerator.SUFFIX);
 
         var writer = new ClassWriter();
 
@@ -39,7 +38,7 @@ public class ServiceGenerator implements Generator<ModelDM> {
         writer.writeImport(qdClass);
         writer.writeImport(wdClass);
         writer.writeImport(ctClass);
-        writer.writeImport(fbClass);
+        writer.writeImport(qbClass);
         writer.writeImport(new ClassDM("java.util.List"));
 
         writer.newLine();
@@ -48,14 +47,14 @@ public class ServiceGenerator implements Generator<ModelDM> {
         writer.writeClassName(sClass.getName(), bsClass);
         writer.begin();//classBegin
         writer.newLine();
-        writer.writeProperty(fbClass, fbClass.getPropertyName(), true);
+        writer.writeProperty(qbClass, qbClass.getPropertyName(), true);
 
         // find
-        writeFind(writer, model, props, qdClass, fbClass);
+        writeFind(writer, model, props, qdClass, qbClass);
         writer.newLine();
 
         //findById
-        writeFindById(writer, model, props, qdClass, ctClass, fbClass);
+        writeFindById(writer, model, props, qdClass, ctClass, qbClass);
         writer.newLine();
 
         writer.end(); // classEnd
