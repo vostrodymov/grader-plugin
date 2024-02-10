@@ -8,12 +8,17 @@
     <name>Grader</name>
 
     <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
-    <vendor email="vostrodymov@gmail.com" url="https://github.com/vostrodymov/grader-plugin">Vostrodymov</vendor>
+    <vendor email="vostrodymov@gmail.com" url="https://github.com/vostrodymov/grader-plugin">vostrodymov</vendor>
 
     <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
          Simple HTML elements (text formatting, paragraphs, and lists) can be added inside of <![CDATA[ ]]> tag.
          Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-description -->
-    <description>Plugin for generating standardized classes, allows you to generate template classes for building APIs</description>
+    <description><![CDATA[
+Plugin for generating standardized classes, allows you to generate template classes for building APIs.
+You can create a service template that is suitable for retrieving data from a database.
+You can create a query builder template for translation into a database.
+These classes use QueryDLS as a translator to the database language.
+]]></description>
 
     <!-- Product and plugin compatibility requirements.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
@@ -37,7 +42,7 @@
                text="Grader"
                popup="true"
                description="Grader generator actions"
-               icon="/icons/monkey.png">
+               icon="/META-INF/menu.png">
 
             <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="AssociateWithFileType"/>
 

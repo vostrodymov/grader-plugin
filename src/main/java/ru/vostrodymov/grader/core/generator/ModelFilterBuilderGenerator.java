@@ -35,6 +35,7 @@ public class ModelFilterBuilderGenerator implements Generator<ModelDM> {
         var ctClass = new ClassDM(props.get(CT_KEY));
         var csClass = new ClassDM(props.get(CS_KEY));
 
+        var emClass = new ClassDM("javax.persistence", "EntityManager");
 
         writer.writePackage(fClass.getPack());
 
@@ -43,6 +44,7 @@ public class ModelFilterBuilderGenerator implements Generator<ModelDM> {
         writer.writeImport("com.querydsl.core.types.dsl.Expressions");
         writer.writeImport("com.querydsl.core.types.dsl.StringPath");
         writer.writeImport("org.springframework.stereotype.Component");
+        writer.writeImport(emClass);
         writer.writeImport("lombok.Getter");
         writer.writeImport("lombok.Setter");
 
@@ -65,9 +67,11 @@ public class ModelFilterBuilderGenerator implements Generator<ModelDM> {
 
         //Ctr
         writer.tab().append("public ").append(fClass.getName()).append("(")
-                .append(csClass.getName()).append(" ").append(csClass.getPropertyName()).append(")")
+                .append(csClass.getName()).append(" ").append(csClass.getPropertyName()).append(", ")
+                .append(emClass.getName()).append(" ").append(emClass.getPropertyName())
+                .append(")")
                 .begin()
-                .tab().append("super(").append(csClass.getPropertyName()).append(");").newLine()
+                .tab().append("super(").append(csClass.getPropertyName()).append(", ").append(emClass.getPropertyName()).append(");").newLine()
                 .tab().append("this.").append(qClazz.getPropertyName()).append(" = ").append(qClazz.getName()).append(".").append(model.getClazz().getPropertyName()).append(";").newLine()
                 .end()
                 .newLine();

@@ -15,6 +15,7 @@ public class ServiceGenerator implements Generator<ModelDM> {
     private static final String QD_KEY = "service.query-definition";
     private static final String WD_KEY = "service.where-definition";
     private static final String CT_KEY = "service.compare-type";
+    private static final String FB_KEY = "service.filter-builder";
 
     private static final String OVERRIDE_FIND_KEY = "service.override.find";
     private static final String OVERRIDE_FIND_BY_ID_KEY = "service.override.find-by-id";
@@ -28,6 +29,7 @@ public class ServiceGenerator implements Generator<ModelDM> {
         var qdClass = new ClassDM(props.get(QD_KEY));
         var wdClass = new ClassDM(props.get(WD_KEY));
         var ctClass = new ClassDM(props.get(CT_KEY));
+        var fbClass = new ClassWithGenericDM(props.get(FB_KEY), model.getClazz());
 
         var writer = new ClassWriter();
 
@@ -37,6 +39,7 @@ public class ServiceGenerator implements Generator<ModelDM> {
         writer.writeImport(qdClass);
         writer.writeImport(wdClass);
         writer.writeImport(ctClass);
+        writer.writeImport(fbClass);
         writer.writeImport(new ClassDM("java.util.List"));
 
         writer.newLine();
@@ -45,20 +48,21 @@ public class ServiceGenerator implements Generator<ModelDM> {
         writer.writeClassName(sClass.getName(), bsClass);
         writer.begin();//classBegin
         writer.newLine();
+        writer.writeProperty(fbClass, fbClass.getPropertyName(), true);
 
         // find
-        writeFind(writer, model, props, qdClass);
+        writeFind(writer, model, props, qdClass, fbClass);
         writer.newLine();
 
         //findById
-        writeFindById(writer, model, props, qdClass, ctClass);
+        writeFindById(writer, model, props, qdClass, ctClass, fbClass);
         writer.newLine();
 
         writer.end(); // classEnd
         return writer.toString();
     }
 
-    private void writeFind(ClassWriter writer, ModelDM model, GraderProperties props, ClassDM qdClass) {
+    private void writeFind(ClassWriter writer, ModelDM model, GraderProperties props, ClassDM qdClass, ClassDM fbClass) {
         writer.writeJavadoc("Метод получения списка сущностей");
         if (props.getBool(OVERRIDE_FIND_KEY)) {
             writer.tab().append("@Override").newLine();
@@ -66,11 +70,11 @@ public class ServiceGenerator implements Generator<ModelDM> {
         writer.tab().append("public List<").append(model.getClazz().getName()).append("> find(")
                 .append(qdClass.getName()).append(" ").append("query)")
                 .begin()
-                .tab().append("return null;").newLine()
+                .tab().append("return ").append(fbClass.getPropertyName()).append(".find(query);").newLine()
                 .end();
     }
 
-    private void writeFindById(ClassWriter writer, ModelDM model, GraderProperties props, ClassDM qdClass, ClassDM ctClass) {
+    private void writeFindById(ClassWriter writer, ModelDM model, GraderProperties props, ClassDM qdClass, ClassDM ctClass, ClassDM fbClass) {
         var idProps = model.getProperties().entrySet().stream().filter(q -> q.getValue().isIdentifier()).collect(Collectors.toSet());
         var idsString = idProps.stream().map(q -> q.getValue().getClazz().getName() + " " + q.getKey()).collect(Collectors.joining(", "));
         idProps.stream().map(Map.Entry::getValue).map(PropertyDM::getClazz).forEach(writer::writeImport);
@@ -86,7 +90,7 @@ public class ServiceGenerator implements Generator<ModelDM> {
             writer.tab().append("new WhereDefinition(\"").append(el.getKey()).append("\", ").append(ctClass.getName()).append(".EQUAL, ").append(el.getKey()).append(")").newLine();
         }
         writer.tab().append("));").revAndNewLine()
-                .tab().append("return null;").newLine()
+                .tab().append("return ").append(fbClass.getPropertyName()).append(".findSingle(query);").newLine()
                 .end();
     }
 
