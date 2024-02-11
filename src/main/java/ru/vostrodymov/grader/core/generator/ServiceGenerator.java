@@ -47,10 +47,13 @@ public class ServiceGenerator implements Generator<ModelDM> {
         writer.writeImport(wdClass);
         writer.writeImport(ctClass);
         writer.writeImport(qbClass);
+        writer.writeImport("org.springframework.stereotype.Service");
         writer.writeImport(new ClassDM("java.util.List"));
 
         writer.newLine();
 
+        writer.writeJavadoc("Сервис для работы с сущностью " + model.getClazz().getName());
+        writer.tab().append("@Service").newLine();
         writer.tab().append("@RequiredArgsConstructor").newLine();
         writer.writeClassName(sClass.getName(), bsClass);
         writer.begin();//classBegin
