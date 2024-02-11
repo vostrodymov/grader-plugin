@@ -15,6 +15,7 @@ public class QueryGenerator implements Generator<ModelDM> {
     private static final String BQ_KEY = "query.base-query";
     private static final String TC_KEY = "query.type-converter";
     private static final String WD_KEY = "query.where-definition";
+    private static final String OD_KEY = "service.order-definition";
     private static final String CT_KEY = "query.compare-type";
     private static final String CS_KEY = "query.converter-store";
     public static final String SUFFIX = "Query";
@@ -34,6 +35,7 @@ public class QueryGenerator implements Generator<ModelDM> {
         var wdClass = new ClassDM(props.get(WD_KEY));
         var ctClass = new ClassDM(props.get(CT_KEY));
         var csClass = new ClassDM(props.get(CS_KEY));
+        var odClass = new ClassDM(props.get(OD_KEY));
 
         var emClass = new ClassDM("javax.persistence", "EntityManager");
         var bpClass = new ClassWithGenericDM("com.querydsl.core.types.dsl.EntityPathBase", model.getClazz());
@@ -41,6 +43,7 @@ public class QueryGenerator implements Generator<ModelDM> {
         writer.writePackage(fClass.getPack());
 
         writer.writeImport("com.querydsl.core.types.dsl.BooleanExpression");
+        writer.writeImport("com.querydsl.core.types.OrderSpecifier");
         writer.writeImport("com.querydsl.core.types.dsl.ComparablePath");
         writer.writeImport("com.querydsl.core.types.dsl.Expressions");
         writer.writeImport("com.querydsl.core.types.dsl.StringPath");
@@ -54,7 +57,8 @@ public class QueryGenerator implements Generator<ModelDM> {
                 .writeImport(tcClass)
                 .writeImport(csClass)
                 .writeImport(ctClass)
-                .writeImport(wdClass);
+                .writeImport(wdClass)
+                .writeImport(odClass);
 
         writer.writeImport("java.util.Locale");
 
@@ -79,21 +83,32 @@ public class QueryGenerator implements Generator<ModelDM> {
                 .newLine();
         writer.newLine();
 
-        writer.tab().append("public BooleanExpression toExpression(WhereDefinition where)")
+        //Filter
+        writeFilterExpression(writer, model, qClazz);
+
+        //Order
+        writeOrderExpression(writer, model, qClazz, odClass);
+
+        //BasePath
+        writeBasePath(writer, bpClass, qClazz);
+
+        writer.end(); // classEnd
+        return writer.toString();
+    }
+
+    private void writeFilterExpression(ClassWriter writer, ModelDM model, ClassDM qClass) {
+        writer.tab().append("@Override").newLine();
+        writer.tab().append("protected BooleanExpression toExpression(WhereDefinition where)")
                 .begin()
                 .tab().append("return switch (where.getField().toLowerCase(Locale.ROOT)) ")
                 .begin();// beginReturn
-        writeFilterProperties(writer, model.getProperties(), new Breadcrumbs(qClazz.getPropertyName()));
+        writeFilterProperties(writer, model.getProperties(), new Breadcrumbs(qClass.getPropertyName()));
 
         writer.append("default -> Expressions.ONE.eq(Expressions.TWO);").newLine()
                 .endAndSymbol(";") // endReturn
                 .end();
 
         writer.newLine();
-        writeBasePath(writer, bpClass, qClazz);
-
-        writer.end(); // classEnd
-        return writer.toString();
     }
 
     private void writeFilterProperties(ClassWriter writer, Map<String, PropertyDM> properties, Breadcrumbs breadcrumbs) {
@@ -113,6 +128,35 @@ public class QueryGenerator implements Generator<ModelDM> {
                         .append("where.getValue(), ").append(el.getValue().getClazz().getName()).append(".class);").newLine();
             } else {
                 writeFilterProperties(writer, el.getValue().getProperties(), elBreadcrumbs);
+            }
+        }
+    }
+
+    private void writeOrderExpression(ClassWriter writer, ModelDM model, ClassDM qClass, ClassDM odClass) {
+        writer.tab().append("@Override").newLine();
+        writer.tab().append("protected OrderSpecifier<?> toOrderExpression(").append(odClass.getName()).append(" order)")
+                .begin()
+                .tab().append("return switch (order.getField().toLowerCase(Locale.ROOT)) ")
+                .begin();// beginReturn
+        writeOrderProperties(writer, model.getProperties(), new Breadcrumbs(qClass.getPropertyName()));
+
+        writer.append("default -> null;").newLine()
+                .endAndSymbol(";") // endReturn
+                .end();
+
+        writer.newLine();
+    }
+
+    private void writeOrderProperties(ClassWriter writer, Map<String, PropertyDM> properties, Breadcrumbs breadcrumbs) {
+        for (var el : properties.entrySet()) {
+            var elBreadcrumbs = new Breadcrumbs(el.getKey(), breadcrumbs);
+            if (!el.getValue().isObject()) {
+                writer.writeImport(el.getValue().getClazz());
+                writer.tab().append("case \"").append(elBreadcrumbs.getWithoutRoot(".").toLowerCase(Locale.ROOT)).append("\" -> ");
+                writer.append("toOrderSpecifier(")
+                        .append(elBreadcrumbs.getPath(".")).append(", order.getDirection());").newLine();
+            } else {
+                writeOrderProperties(writer, el.getValue().getProperties(), elBreadcrumbs);
             }
         }
     }
