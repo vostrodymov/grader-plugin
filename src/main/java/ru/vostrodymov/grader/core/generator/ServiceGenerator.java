@@ -102,7 +102,7 @@ public class ServiceGenerator implements Generator<ModelDM> {
         var idProps = model.getProperties().entrySet().stream().filter(q -> q.getValue().isIdentifier()).collect(Collectors.toSet());
         var idsString = idProps.stream().map(q -> q.getValue().getClazz().getName() + " " + q.getKey()).collect(Collectors.joining(", "));
         idProps.stream().map(Map.Entry::getValue).map(PropertyDM::getClazz).forEach(writer::writeImport);
-        writer.writeJavadoc("Метод сущности по ее идентификатору");
+        writer.writeJavadoc("Метод получения сущности по ее идентификатору");
         if (props.getBool(OVERRIDE_FIND_BY_ID_KEY)) {
             writer.tab().append("@Override").newLine();
         }
