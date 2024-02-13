@@ -4,13 +4,16 @@ import ru.vostrodymov.grader.core.datamodel.ModelDM;
 import ru.vostrodymov.grader.core.datamodel.PropertyDM;
 import ru.vostrodymov.grader.core.datamodel.types.ClassDM;
 import ru.vostrodymov.grader.core.datamodel.types.ClassWithGenericDM;
+import ru.vostrodymov.grader.core.generator.types.JavaCode;
 import ru.vostrodymov.grader.core.props.GraderProperties;
 import ru.vostrodymov.grader.core.write.ClassWriter;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
-public class ServiceGenerator implements Generator<ModelDM> {
+public class ServiceGenerator extends JavaGenerator<ModelDM> {
+    private static final String PACK_MASK_KEY = "service.package-mask";
     private static final String BS_KEY = "service.base-service";
     private static final String QD_KEY = "service.query-definition";
     private static final String WD_KEY = "service.where-definition";
@@ -29,14 +32,14 @@ public class ServiceGenerator implements Generator<ModelDM> {
     private static final String SUFFIX = "Service";
 
     @Override
-    public String run(ModelDM model, GraderProperties props) {
+    public JavaCode run(ModelDM model, GraderProperties props) {
 
-        var sClass = getClassDm(model);
+        var sClass = getClassDm(model, props);
         var bsClass = new ClassWithGenericDM(props.get(BS_KEY), model.getClazz());
         var qdClass = new ClassDM(props.get(QD_KEY));
         var wdClass = new ClassDM(props.get(WD_KEY));
         var ctClass = new ClassDM(props.get(CT_KEY));
-        var qbClass = new ClassDM(model.getClazz() + QueryGenerator.SUFFIX);
+        var qbClass = new QueryGenerator().getClassDm(model, props);
 
         var writer = new ClassWriter();
 
@@ -76,7 +79,7 @@ public class ServiceGenerator implements Generator<ModelDM> {
         writeDelete(writer, model, props, qdClass, ctClass, qbClass);
 
         writer.end(); // classEnd
-        return writer.toString();
+        return new JavaCode(sClass, writer.toString());
     }
 
     private void writeFind(ClassWriter writer, ModelDM model, GraderProperties props, ClassDM qdClass, ClassDM fbClass) {
@@ -168,7 +171,9 @@ public class ServiceGenerator implements Generator<ModelDM> {
                 .newLine();
     }
 
-    public ClassDM getClassDm(ModelDM model) {
-        return new ClassDM(model.getClazz().getPack(), model.getClazz().getName() + SUFFIX);
+    public ClassDM getClassDm(ModelDM model, GraderProperties props) {
+        return super.getClassDm(model.getClazz().getName() + SUFFIX,
+                model.getClazz().getPack(),
+                Optional.ofNullable(props.get(PACK_MASK_KEY)).orElse(""));
     }
 }

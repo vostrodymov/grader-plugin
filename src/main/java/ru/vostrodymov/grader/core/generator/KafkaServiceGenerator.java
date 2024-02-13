@@ -1,13 +1,14 @@
 package ru.vostrodymov.grader.core.generator;
 
 import ru.vostrodymov.grader.core.datamodel.KafkaDM;
+import ru.vostrodymov.grader.core.generator.types.JavaCode;
 import ru.vostrodymov.grader.core.props.GraderProperties;
 import ru.vostrodymov.grader.core.write.ClassWriter;
 
 @Deprecated
-public class KafkaServiceGenerator implements Generator<KafkaDM> {
+public class KafkaServiceGenerator extends JavaGenerator<KafkaDM> {
     @Override
-    public String run(KafkaDM listener, GraderProperties props) {
+    public JavaCode run(KafkaDM listener, GraderProperties props) {
         var writer = new ClassWriter();
 
         writer.writePackage(listener.getService().getPack());
@@ -21,6 +22,6 @@ public class KafkaServiceGenerator implements Generator<KafkaDM> {
         writer.tab().append("void apply(").append(listener.getRecordValue().getName()).append(" data);").newLine();
 
         writer.end(); // interfaceEnd
-        return writer.toString();
+        return new JavaCode(listener.getService(), writer.toString());
     }
 }

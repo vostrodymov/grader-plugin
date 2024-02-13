@@ -2,14 +2,15 @@ package ru.vostrodymov.grader.core.generator;
 
 
 import ru.vostrodymov.grader.core.datamodel.ModelDM;
+import ru.vostrodymov.grader.core.generator.types.JavaCode;
 import ru.vostrodymov.grader.core.props.GraderProperties;
 import ru.vostrodymov.grader.core.write.ClassWriter;
 
 @Deprecated
-public class ModelGenerator implements Generator<ModelDM> {
+public class ModelGenerator extends JavaGenerator<ModelDM> {
 
     @Override
-    public String run(ModelDM model, GraderProperties props) {
+    public JavaCode run(ModelDM model, GraderProperties props) {
         var writer = new ClassWriter();
 
         writer.writePackage(model.getClazz().getPack());
@@ -30,6 +31,6 @@ public class ModelGenerator implements Generator<ModelDM> {
         }
 
         writer.end(); // classEnd
-        return writer.toString();
+        return new JavaCode(model.getClazz(), writer.toString());
     }
 }

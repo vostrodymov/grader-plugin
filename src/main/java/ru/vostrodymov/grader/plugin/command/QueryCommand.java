@@ -16,8 +16,8 @@ public class QueryCommand extends BaseCommand {
     @Override
     protected void doRun(ModelDM model) {
         final var props = new GraderProperties(getProject());
-        final String java = filterBuilderGenerator.run(model, props);
-        createFile(java, filterBuilderGenerator.getClassDm(model), getPsiFileFactory());
+        final var java = filterBuilderGenerator.run(model, props);
+        createFile(java.getCode(), java.getClazz(), getPsiFileFactory());
     }
 
 

@@ -1,17 +1,21 @@
 package ru.vostrodymov.grader.core.generator;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import ru.vostrodymov.grader.core.datamodel.ModelDM;
 import ru.vostrodymov.grader.core.datamodel.PropertyDM;
 import ru.vostrodymov.grader.core.datamodel.types.ClassDM;
 import ru.vostrodymov.grader.core.datamodel.types.ClassWithGenericDM;
 import ru.vostrodymov.grader.core.generator.types.Breadcrumbs;
+import ru.vostrodymov.grader.core.generator.types.JavaCode;
 import ru.vostrodymov.grader.core.props.GraderProperties;
 import ru.vostrodymov.grader.core.write.ClassWriter;
 
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
-public class QueryGenerator implements Generator<ModelDM> {
+public class QueryGenerator extends JavaGenerator<ModelDM> {
+    private static final String PACK_MASK_KEY = "query.package-mask";
+    private static final String ANN_COMPONENT_KEY = "query.annotation-component";
     private static final String BQ_KEY = "query.base-query";
     private static final String TC_KEY = "query.type-converter";
     private static final String WD_KEY = "query.where-definition";
@@ -20,15 +24,18 @@ public class QueryGenerator implements Generator<ModelDM> {
     private static final String CS_KEY = "query.converter-store";
     public static final String SUFFIX = "Query";
 
-    public ClassDM getClassDm(ModelDM model) {
-        return new ClassDM(model.getClazz().getPack(), model.getClazz().getName() + SUFFIX);
+    public ClassDM getClassDm(ModelDM model, GraderProperties props) {
+        return getClassDm(
+                model.getClazz().getName() + SUFFIX,
+                model.getClazz().getPack(),
+                Optional.ofNullable(props.get(PACK_MASK_KEY)).orElse(""));
     }
 
     @Override
-    public String run(ModelDM model, GraderProperties props) {
+    public JavaCode run(ModelDM model, GraderProperties props) {
         var writer = new ClassWriter();
 
-        var fClass = getClassDm(model);
+        var fClass = getClassDm(model, props);
         var qClazz = new ClassDM(model.getClazz().getPack(), "Q" + model.getClazz().getName());
         var bqClass = new ClassWithGenericDM(props.get(BQ_KEY), model.getClazz());
         var tcClass = new ClassDM(props.get(TC_KEY));
@@ -39,6 +46,7 @@ public class QueryGenerator implements Generator<ModelDM> {
 
         var emClass = new ClassDM("javax.persistence", "EntityManager");
         var bpClass = new ClassWithGenericDM("com.querydsl.core.types.dsl.EntityPathBase", model.getClazz());
+
 
         writer.writePackage(fClass.getPack());
 
@@ -62,9 +70,16 @@ public class QueryGenerator implements Generator<ModelDM> {
 
         writer.writeImport("java.util.Locale");
 
-        writer.append("@Component").newLine();
+        if (props.getBool(ANN_COMPONENT_KEY)) {
+            writer.append("@Component").newLine();
+        }
         writer.writeClassName(fClass.getName(), bqClass);
         writer.begin();//classBegin
+        //Const
+        var consts = new ArrayList<PropertyConst>();
+        writeConstPropertyNames(writer, model.getProperties(), new Breadcrumbs(qClazz.getPropertyName()), consts);
+        writer.newLine();
+
         //Props
         writer.tab().append("@Getter").newLine()
                 .tab().append("@Setter").newLine();
@@ -84,25 +99,54 @@ public class QueryGenerator implements Generator<ModelDM> {
         writer.newLine();
 
         //Filter
-        writeFilterExpression(writer, model, qClazz);
+        writeFilterExpression(writer, consts);
 
         //Order
-        writeOrderExpression(writer, model, qClazz, odClass);
+        writeOrderExpression(writer, consts, odClass);
 
         //BasePath
         writeBasePath(writer, bpClass, qClazz);
 
         writer.end(); // classEnd
-        return writer.toString();
+        return new JavaCode(fClass, writer.toString());
     }
 
-    private void writeFilterExpression(ClassWriter writer, ModelDM model, ClassDM qClass) {
+    private void writeConstPropertyNames(ClassWriter writer, Map<String, PropertyDM> properties,
+                                         Breadcrumbs breadcrumbs, List<PropertyConst> result) {
+        for (var el : properties.entrySet()) {
+            var elBreadcrumbs = new Breadcrumbs(el.getKey(), breadcrumbs);
+            if (!el.getValue().isObject()) {
+                var pPath = elBreadcrumbs.getWithoutRoot(".").toLowerCase(Locale.ROOT);
+                var pName = elBreadcrumbs.getWithoutRoot("_").toUpperCase(Locale.ROOT) + "_KEY";
+                result.add(new PropertyConst(pName, el.getValue().getClazz(), elBreadcrumbs));
+
+                writer.writeImport(el.getValue().getClazz());
+                writer.tab().append("private static final String ").append(pName).append(" = \"").append(pPath).append("\";").newLine();
+            } else {
+                writeConstPropertyNames(writer, el.getValue().getProperties(), elBreadcrumbs, result);
+            }
+        }
+    }
+
+    private void writeFilterExpression(ClassWriter writer, List<PropertyConst> properties) {
         writer.tab().append("@Override").newLine();
         writer.tab().append("protected BooleanExpression toExpression(WhereDefinition where)")
                 .begin()
                 .tab().append("return switch (where.getField().toLowerCase(Locale.ROOT)) ")
                 .begin();// beginReturn
-        writeFilterProperties(writer, model.getProperties(), new Breadcrumbs(qClass.getPropertyName()));
+
+        for (var el : properties) {
+            writer.tab().append("case ").append(el.getName()).append(" -> ");
+            if (el.getClazz().isString()) {
+                writer.append("takeStringExpression(");
+            } else {
+                writer.append("takeComparableExpression(");
+            }
+            writer
+                    .append("where.getCompare(), ")
+                    .append(el.getBreadcrumbs().getPath(".")).append(", ")
+                    .append("where.getValue(), ").append(el.getClazz().getName()).append(".class);").newLine();
+        }
 
         writer.append("default -> Expressions.ONE.eq(Expressions.TWO);").newLine()
                 .endAndSymbol(";") // endReturn
@@ -111,34 +155,19 @@ public class QueryGenerator implements Generator<ModelDM> {
         writer.newLine();
     }
 
-    private void writeFilterProperties(ClassWriter writer, Map<String, PropertyDM> properties, Breadcrumbs breadcrumbs) {
-        for (var el : properties.entrySet()) {
-            var elBreadcrumbs = new Breadcrumbs(el.getKey(), breadcrumbs);
-            if (!el.getValue().isObject()) {
-                writer.writeImport(el.getValue().getClazz());
-                writer.tab().append("case \"").append(elBreadcrumbs.getWithoutRoot(".").toLowerCase(Locale.ROOT)).append("\" -> ");
-                if (el.getValue().getClazz().isString()) {
-                    writer.append("takeStringExpression(");
-                } else {
-                    writer.append("takeComparableExpression(");
-                }
-                writer
-                        .append("where.getCompare(), ")
-                        .append(elBreadcrumbs.getPath(".")).append(", ")
-                        .append("where.getValue(), ").append(el.getValue().getClazz().getName()).append(".class);").newLine();
-            } else {
-                writeFilterProperties(writer, el.getValue().getProperties(), elBreadcrumbs);
-            }
-        }
-    }
-
-    private void writeOrderExpression(ClassWriter writer, ModelDM model, ClassDM qClass, ClassDM odClass) {
+    private void writeOrderExpression(ClassWriter writer, List<PropertyConst> properties, ClassDM odClass) {
         writer.tab().append("@Override").newLine();
         writer.tab().append("protected OrderSpecifier<?> toOrderExpression(").append(odClass.getName()).append(" order)")
                 .begin()
                 .tab().append("return switch (order.getField().toLowerCase(Locale.ROOT)) ")
                 .begin();// beginReturn
-        writeOrderProperties(writer, model.getProperties(), new Breadcrumbs(qClass.getPropertyName()));
+
+        for (var el : properties) {
+            writer.writeImport(el.getClazz());
+            writer.tab().append("case ").append(el.getName()).append(" -> ");
+            writer.append("toOrderSpecifier(")
+                    .append(el.getBreadcrumbs().getPath(".")).append(", order.getDirection());").newLine();
+        }
 
         writer.append("default -> null;").newLine()
                 .endAndSymbol(";") // endReturn
@@ -147,26 +176,21 @@ public class QueryGenerator implements Generator<ModelDM> {
         writer.newLine();
     }
 
-    private void writeOrderProperties(ClassWriter writer, Map<String, PropertyDM> properties, Breadcrumbs breadcrumbs) {
-        for (var el : properties.entrySet()) {
-            var elBreadcrumbs = new Breadcrumbs(el.getKey(), breadcrumbs);
-            if (!el.getValue().isObject()) {
-                writer.writeImport(el.getValue().getClazz());
-                writer.tab().append("case \"").append(elBreadcrumbs.getWithoutRoot(".").toLowerCase(Locale.ROOT)).append("\" -> ");
-                writer.append("toOrderSpecifier(")
-                        .append(elBreadcrumbs.getPath(".")).append(", order.getDirection());").newLine();
-            } else {
-                writeOrderProperties(writer, el.getValue().getProperties(), elBreadcrumbs);
-            }
-        }
-    }
-
     private void writeBasePath(ClassWriter writer, ClassDM bpClass, ClassDM qClass) {
         writer.tab().append("@Override").newLine();
         writer.tab().append("protected ").append(bpClass.getName()).append(" getEntityPath()")
                 .begin()
                 .tab().append("return this.").append(qClass.getPropertyName()).append(";").newLine()
                 .end();
+
+    }
+
+    @AllArgsConstructor
+    @Getter
+    private static class PropertyConst {
+        private String name;
+        private ClassDM clazz;
+        private Breadcrumbs breadcrumbs;
 
     }
 }

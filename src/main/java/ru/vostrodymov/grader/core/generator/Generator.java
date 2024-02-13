@@ -1,8 +1,9 @@
 package ru.vostrodymov.grader.core.generator;
 
+import ru.vostrodymov.grader.core.generator.types.JavaCode;
 import ru.vostrodymov.grader.core.props.GraderProperties;
 
-public interface Generator<T> {
+public interface Generator<T, R> {
 
-    String run(T data, GraderProperties props);
+    R run(T data, GraderProperties props);
 }

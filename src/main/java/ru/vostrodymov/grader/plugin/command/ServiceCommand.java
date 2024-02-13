@@ -16,7 +16,7 @@ public class ServiceCommand extends BaseCommand {
     @Override
     protected void doRun(ModelDM model) {
         final var props = new GraderProperties(getProject());
-        final String java = serviceGenerator.run(model, props);
-        createFile(java, serviceGenerator.getClassDm(model), getPsiFileFactory());
+        final var java = serviceGenerator.run(model, props);
+        createFile(java.getCode(), java.getClazz(), getPsiFileFactory());
     }
 }
