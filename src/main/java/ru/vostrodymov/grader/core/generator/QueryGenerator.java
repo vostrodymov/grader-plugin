@@ -12,12 +12,14 @@ import ru.vostrodymov.grader.core.props.GraderProperties;
 import ru.vostrodymov.grader.core.write.ClassWriter;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class QueryGenerator extends JavaGenerator<ModelDM> {
     private static final String PACK_MASK_KEY = "query.package-mask";
     private static final String ANN_COMPONENT_KEY = "query.annotation-component";
     private static final String BQ_KEY = "query.base-query";
     private static final String TC_KEY = "query.type-converter";
+    private static final String QD_KEY = "query.query-definition";
     private static final String WD_KEY = "query.where-definition";
     private static final String OD_KEY = "service.order-definition";
     private static final String CT_KEY = "query.compare-type";
@@ -39,6 +41,7 @@ public class QueryGenerator extends JavaGenerator<ModelDM> {
         var qClazz = new ClassDM(model.getClazz().getPack(), "Q" + model.getClazz().getName());
         var bqClass = new ClassWithGenericDM(props.get(BQ_KEY), model.getClazz());
         var tcClass = new ClassDM(props.get(TC_KEY));
+        var qdClass = new ClassDM(props.get(QD_KEY));
         var wdClass = new ClassDM(props.get(WD_KEY));
         var ctClass = new ClassDM(props.get(CT_KEY));
         var csClass = new ClassDM(props.get(CS_KEY));
@@ -63,6 +66,7 @@ public class QueryGenerator extends JavaGenerator<ModelDM> {
 
         writer.writeImport(bqClass)
                 .writeImport(tcClass)
+                .writeImport(qdClass)
                 .writeImport(csClass)
                 .writeImport(ctClass)
                 .writeImport(wdClass)
@@ -81,8 +85,7 @@ public class QueryGenerator extends JavaGenerator<ModelDM> {
         writer.newLine();
 
         //Props
-        writer.tab().append("@Getter").newLine()
-                .tab().append("@Setter").newLine();
+        writer.tab().append("@Getter").newLine();
         writer.writeProperty(qClazz, qClazz.getPropertyName(), true);
         writer.newLine();
 
@@ -101,6 +104,8 @@ public class QueryGenerator extends JavaGenerator<ModelDM> {
         //Filter
         writeFilterExpression(writer, consts);
 
+        writeFinById(writer, fClass, qdClass, wdClass, ctClass, consts);
+
         //Order
         writeOrderExpression(writer, consts, odClass);
 
@@ -118,7 +123,7 @@ public class QueryGenerator extends JavaGenerator<ModelDM> {
             if (!el.getValue().isObject()) {
                 var pPath = elBreadcrumbs.getWithoutRoot(".").toLowerCase(Locale.ROOT);
                 var pName = elBreadcrumbs.getWithoutRoot("_").toUpperCase(Locale.ROOT) + "_KEY";
-                result.add(new PropertyConst(pName, el.getValue().getClazz(), elBreadcrumbs));
+                result.add(new PropertyConst(pName, el.getValue().getClazz(), elBreadcrumbs, el.getValue().isIdentifier()));
 
                 writer.writeImport(el.getValue().getClazz());
                 writer.tab().append("private static final String ").append(pName).append(" = \"").append(pPath).append("\";").newLine();
@@ -176,6 +181,23 @@ public class QueryGenerator extends JavaGenerator<ModelDM> {
         writer.newLine();
     }
 
+    private void writeFinById(ClassWriter writer, ClassDM fClass, ClassDM qdClass, ClassDM wdClass, ClassDM ctClass, List<PropertyConst> properties) {
+        var ids = properties.stream().filter(PropertyConst::isIdentifier).collect(Collectors.toList());
+        writer.tab().append("public ").append(fClass.getName()).append(" findById(")
+                .append(ids.stream().map(PropertyConst::getClazz).map(q -> q.getName() + " " + q.getPropertyName()).collect(Collectors.joining(", ")))
+                .append(")")
+                .begin()
+                .tab().append("final var query = new ").append(qdClass.getName()).append("();").newLine()
+                .tab().append("query.setWhere(List.of(").newLineAndTab();
+        for (var el : ids) {
+            writer.tab().append("new ").append(wdClass.getName()).append("(").append(el.getName()).append(", ").append(ctClass.getName()).append(".EQUAL, ").append(el.getClazz().getPropertyName()).append(")").newLine();
+        }
+        writer.tab().append("));").revAndNewLine()
+                .tab().append("return this.findSingle(query);").newLine()
+                .end();
+    }
+
+
     private void writeBasePath(ClassWriter writer, ClassDM bpClass, ClassDM qClass) {
         writer.tab().append("@Override").newLine();
         writer.tab().append("protected ").append(bpClass.getName()).append(" getEntityPath()")
@@ -191,6 +213,7 @@ public class QueryGenerator extends JavaGenerator<ModelDM> {
         private String name;
         private ClassDM clazz;
         private Breadcrumbs breadcrumbs;
+        private boolean identifier;
 
     }
 }
