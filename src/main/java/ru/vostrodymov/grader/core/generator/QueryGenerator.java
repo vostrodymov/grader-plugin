@@ -63,6 +63,7 @@ public class QueryGenerator extends JavaGenerator<ModelDM> {
         writer.writeImport("lombok.Getter");
         writer.writeImport("lombok.Setter");
         writer.writeImport(bpClass);
+        writer.writeImport("java.util.List");
 
         writer.writeImport(bqClass)
                 .writeImport(tcClass)
@@ -104,7 +105,7 @@ public class QueryGenerator extends JavaGenerator<ModelDM> {
         //Filter
         writeFilterExpression(writer, consts);
 
-        writeFinById(writer, fClass, qdClass, wdClass, ctClass, consts);
+        writeFinById(writer, model.getClazz(), qdClass, wdClass, ctClass, consts);
 
         //Order
         writeOrderExpression(writer, consts, odClass);
@@ -181,9 +182,9 @@ public class QueryGenerator extends JavaGenerator<ModelDM> {
         writer.newLine();
     }
 
-    private void writeFinById(ClassWriter writer, ClassDM fClass, ClassDM qdClass, ClassDM wdClass, ClassDM ctClass, List<PropertyConst> properties) {
+    private void writeFinById(ClassWriter writer, ClassDM mClass, ClassDM qdClass, ClassDM wdClass, ClassDM ctClass, List<PropertyConst> properties) {
         var ids = properties.stream().filter(PropertyConst::isIdentifier).collect(Collectors.toList());
-        writer.tab().append("public ").append(fClass.getName()).append(" findById(")
+        writer.tab().append("public ").append(mClass.getName()).append(" findById(")
                 .append(ids.stream().map(PropertyConst::getClazz).map(q -> q.getName() + " " + q.getPropertyName()).collect(Collectors.joining(", ")))
                 .append(")")
                 .begin()
