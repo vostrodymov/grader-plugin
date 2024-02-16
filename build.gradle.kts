@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "ru.vostrodymov.grader"
-version = "3.0.6-SNAPSHOT"
+version = "3.0.7-SNAPSHOT"
 
 repositories {
     mavenCentral()
@@ -41,8 +41,8 @@ tasks {
     }
 
     patchPluginXml {
-        sinceBuild.set("212")
-        untilBuild.set("222.*")
+        sinceBuild.set("201")
+        untilBuild.set("233.*")
     }
 
     signPlugin {
