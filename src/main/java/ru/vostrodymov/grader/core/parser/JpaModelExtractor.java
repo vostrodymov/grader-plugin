@@ -27,6 +27,10 @@ public class JpaModelExtractor implements Extractor<ModelDM> {
         var map = new HashMap<String, PropertyDM>();
         for (var fel : clazz.getAllFields()) {
             var prop = new PropertyDM(new ClassDM(fel.getType().getCanonicalText()), null);
+            Optional.of(fel.getType())
+                    .map(PsiTypesUtil::getPsiClass)
+                    .map(PsiClass::isEnum)
+                    .ifPresent(prop.getClazz()::setEnum);
 
             Optional.of(fel.getAnnotations()).map(Arrays::stream)
                     .filter(q -> q.anyMatch(r -> r.hasQualifiedName(COLUMN_ID_ANN)))

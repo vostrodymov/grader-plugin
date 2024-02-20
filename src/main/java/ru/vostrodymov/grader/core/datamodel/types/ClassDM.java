@@ -20,6 +20,8 @@ public class ClassDM {
     @JsonAlias("name")
     private String name;
 
+    private boolean isEnum = false;
+
     public ClassDM(String value) {
         if (Objects.nonNull(value)) {
             var lastDot = value.lastIndexOf(".");

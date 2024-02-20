@@ -171,8 +171,14 @@ public class QueryGenerator extends JavaGenerator<ModelDM> {
         for (var el : properties) {
             writer.writeImport(el.getClazz());
             writer.tab().append("case ").append(el.getName()).append(" -> ");
-            writer.append("toOrderSpecifier(")
-                    .append(el.getBreadcrumbs().getPath(".")).append(", order.getDirection());").newLine();
+            writer.append("toOrderSpecifier(");
+            if (el.getClazz().isEnum()) {
+                writer.newLine().append("orderCase(").append(el.getBreadcrumbs().getPath(".")).append(",").newLine()
+                        .append(el.getClazz().getName()).append(".class), ").newLine()
+                        .append("order.getDirection());").newLine();
+            } else {
+                writer.append(el.getBreadcrumbs().getPath(".")).append(", order.getDirection());").newLine();
+            }
         }
 
         writer.append("default -> null;").newLine()

@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "ru.vostrodymov.grader"
-version = "3.0.8-SNAPSHOT"
+version = "3.0.10-SNAPSHOT"
 
 repositories {
     mavenCentral()
@@ -21,7 +21,6 @@ intellij {
 dependencies {
     implementation("commons-io:commons-io:2.11.0")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.13.1")
-//    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.13.1")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.13.1")
 
     implementation("org.projectlombok:lombok:1.18.30")
