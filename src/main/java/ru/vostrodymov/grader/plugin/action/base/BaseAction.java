@@ -3,6 +3,7 @@ package ru.vostrodymov.grader.plugin.action.base;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -24,22 +25,18 @@ public abstract class BaseAction extends AnAction {
             throw new RuntimeException("Ошибка, не нйден файл иои проект");
         }
 
-        ModuleManager manager = ModuleManager.getInstance(project);
-        com.intellij.openapi.module.Module[] modules = manager.getModules();
-        var pattern = Pattern.compile(".*\\.main");
+        var module = LangDataKeys.MODULE.getData(dataContext);
         var patter2 = Pattern.compile("src/main/java");
         AtomicReference<PsiDirectory> rootDir = new AtomicReference<>();
-        for (com.intellij.openapi.module.Module module : modules) {
-            ModuleRootManager root = ModuleRootManager.getInstance(module);
-            if (pattern.matcher(root.getModule().getName()).find()) {
-                for (VirtualFile file : root.getSourceRoots()) {
-                    System.out.println(file.getFileType().getName() + "   " + file);
-                    if (patter2.matcher(file.getPath()).find()) {
-                        rootDir.set(new PsiDirectoryImpl(((PsiManagerImpl) PsiManager.getInstance(project)), file));
-                    }
-                }
+
+        ModuleRootManager root = ModuleRootManager.getInstance(module);
+        for (VirtualFile file : root.getSourceRoots()) {
+            System.out.println(file.getFileType().getName() + "   " + file);
+            if (patter2.matcher(file.getPath()).find()) {
+                rootDir.set(new PsiDirectoryImpl(((PsiManagerImpl) PsiManager.getInstance(project)), file));
             }
         }
+
         return rootDir.get();
     }
 
