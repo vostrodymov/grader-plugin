@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "ru.vostrodymov.grader"
-version = "3.0.11-SNAPSHOT"
+version = "3.0.12"
 
 repositories {
     mavenCentral()

@@ -124,7 +124,7 @@ public class QueryGenerator extends JavaGenerator<ModelDM> {
             if (!el.getValue().isObject()) {
                 var pPath = elBreadcrumbs.getWithoutRoot(".").toLowerCase(Locale.ROOT);
                 var pName = elBreadcrumbs.getWithoutRoot("_").toUpperCase(Locale.ROOT) + "_KEY";
-                result.add(new PropertyConst(pName, el.getValue().getClazz(), elBreadcrumbs, el.getValue().isIdentifier()));
+                result.add(new PropertyConst(pName, el.getValue().getClazz(), elBreadcrumbs, el.getValue().isIdentifier(), el.getKey()));
 
                 writer.writeImport(el.getValue().getClazz());
                 writer.tab().append("private static final String ").append(pName).append(" = \"").append(pPath).append("\";").newLine();
@@ -142,7 +142,7 @@ public class QueryGenerator extends JavaGenerator<ModelDM> {
                 .begin();// beginReturn
 
         for (var el : properties) {
-            writer.tab().append("case ").append(el.getName()).append(" -> ");
+            writer.tab().append("case ").append(el.getConstName()).append(" -> ");
             if (el.getClazz().isString()) {
                 writer.append("takeStringExpression(");
             } else {
@@ -170,7 +170,7 @@ public class QueryGenerator extends JavaGenerator<ModelDM> {
 
         for (var el : properties) {
             writer.writeImport(el.getClazz());
-            writer.tab().append("case ").append(el.getName()).append(" -> ");
+            writer.tab().append("case ").append(el.getConstName()).append(" -> ");
             writer.append("toOrderSpecifier(");
             if (el.getClazz().isEnum()) {
                 writer.newLine().append("orderCase(").append(el.getBreadcrumbs().getPath(".")).append(",").newLine()
@@ -191,13 +191,13 @@ public class QueryGenerator extends JavaGenerator<ModelDM> {
     private void writeFinById(ClassWriter writer, ClassDM mClass, ClassDM qdClass, ClassDM wdClass, ClassDM ctClass, List<PropertyConst> properties) {
         var ids = properties.stream().filter(PropertyConst::isIdentifier).collect(Collectors.toList());
         writer.tab().append("public ").append(mClass.getName()).append(" findById(")
-                .append(ids.stream().map(PropertyConst::getClazz).map(q -> q.getName() + " " + q.getPropertyName()).collect(Collectors.joining(", ")))
+                .append(ids.stream().map(q -> q.getClazz().getName() + " " + q.getPropertyName()).collect(Collectors.joining(", ")))
                 .append(")")
                 .begin()
                 .tab().append("final var query = new ").append(qdClass.getName()).append("();").newLine()
                 .tab().append("query.setWhere(List.of(").newLineAndTab();
         for (var el : ids) {
-            writer.tab().append("new ").append(wdClass.getName()).append("(").append(el.getName()).append(", ").append(ctClass.getName()).append(".EQUAL, ").append(el.getClazz().getPropertyName()).append(")").newLine();
+            writer.tab().append("new ").append(wdClass.getName()).append("(").append(el.getConstName()).append(", ").append(ctClass.getName()).append(".EQUAL, ").append(el.getPropertyName()).append(")").newLine();
         }
         writer.tab().append("));").revAndNewLine()
                 .tab().append("return this.findSingle(query);").newLine()
@@ -217,10 +217,10 @@ public class QueryGenerator extends JavaGenerator<ModelDM> {
     @AllArgsConstructor
     @Getter
     private static class PropertyConst {
-        private String name;
+        private String constName;
         private ClassDM clazz;
         private Breadcrumbs breadcrumbs;
         private boolean identifier;
-
+        private String propertyName;
     }
 }
